@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "PC to iPhone File Transfer",
+  "version": "1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "Gemini_Generated_Image_dhmd7ndhmd7ndhmd.png"
+  },
+  "permissions": ["activeTab"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

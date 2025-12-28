@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { width: 320px; padding: 20px; font-family: sans-serif; text-align: center; }
+        #status { margin: 15px 0; color: #555; font-size: 14px; }
+        #qrcode { margin: 15px auto; display: flex; justify-content: center; }
+        .btn { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; display: block; margin-top: 10px;}
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        input[type="file"] { display: none; }
+    </style>
+    <script src="peerjs.min.js"></script>
+    <script src="qrcode.min.js"></script>
+</head>
+<body>
+    <h2>Send to iPhone</h2>
+    <div id="status">Initializing...</div>
+
+    <div id="qrcode"></div>
+
+    <div id="upload-section" style="display:none;">
+        <label for="fileInput" class="btn">Select File</label>
+        <input type="file" id="fileInput">
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
