@@ -2,27 +2,70 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Receive File</title>
+    <title>File Teleport - Receiver</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center; padding: 40px 20px; background: #f0f2f5; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { margin-top: 0; font-size: 24px; }
-        #status { color: #666; margin-bottom: 20px; }
-        .download-btn { background: #28a745; color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; display: block; margin-top: 20px; cursor: pointer; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
+            color: #333;
+            max-width: 400px;
+            margin: auto;
+        }
+        h1 { margin-top: 0; font-size: 22px; color: #764ba2; }
+        #status { color: #666; margin-bottom: 20px; font-size: 14px; background: #f0f2f5; padding: 10px; border-radius: 10px; }
+        .download-btn { 
+            background: linear-gradient(to right, #11998e, #38ef7d); 
+            color: white; 
+            text-decoration: none; 
+            padding: 15px; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            display: block; 
+            margin-top: 15px; 
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .send-btn {
+            background: linear-gradient(to right, #3a7bd5, #00d2ff);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>iPhone Receiver</h1>
+        <h1>iPhone Receiver 📱</h1>
         <div id="status">Connecting to Laptop...</div>
+        
         <div id="file-area"></div>
 
-        <hr style="margin: 30px 0; opacity: 0.1;">
+        <hr style="margin: 25px 0; opacity: 0.1;">
 
         <div id="upload-section">
-            <p style="color: #666; font-size: 14px;">Send back to PC:</p>
-            <label for="iphoneFile" class="download-btn" style="background: #007bff;">Select Photos/Files</label>
+            <p style="color: #888; font-size: 12px; margin-bottom: 10px;">SEND TO PC</p>
+            <label for="iphoneFile" class="send-btn">📸 Select Photos/Files</label>
             <input type="file" id="iphoneFile" style="display:none;">
         </div>
     </div>
@@ -38,20 +81,19 @@
 
         peer.on('open', () => {
             if (!targetId) {
-                statusDiv.innerText = "❌ Error: No connection ID found.";
+                statusDiv.innerText = "❌ No connection ID found.";
                 return;
             }
 
             const conn = peer.connect(targetId);
 
             conn.on('open', () => {
-                statusDiv.innerText = "✅ Connected! Ready to swap files.";
+                statusDiv.innerText = "✅ Connected to Laptop!";
 
-                // THIS TELLS THE IPHONE HOW TO SEND
                 iphoneFile.addEventListener('change', (event) => {
                     const file = event.target.files[0];
                     if (file && conn) {
-                        statusDiv.innerText = `Sending ${file.name} to PC...`;
+                        statusDiv.innerText = `Sending ${file.name}...`;
                         conn.send({
                             file: file,
                             filename: file.name,
@@ -64,13 +106,13 @@
 
             conn.on('data', (data) => {
                 if (data.file) {
-                    statusDiv.innerText = "✅ File Received!";
+                    statusDiv.innerText = "📥 New File Received!";
                     const blob = new Blob([data.file], { type: data.filetype });
                     const url = URL.createObjectURL(blob);
                     const btn = document.createElement('a');
                     btn.href = url;
                     btn.download = data.filename; 
-                    btn.innerText = `Save ${data.filename}`;
+                    btn.innerText = `💾 Save ${data.filename}`;
                     btn.className = "download-btn";
                     fileArea.innerHTML = ""; 
                     fileArea.appendChild(btn);
