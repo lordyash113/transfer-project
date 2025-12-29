@@ -9,7 +9,7 @@
         .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { margin-top: 0; font-size: 24px; }
         #status { color: #666; margin-bottom: 20px; }
-        .download-btn { background: #28a745; color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; display: block; margin-top: 20px; }
+        .download-btn { background: #28a745; color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; display: block; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -17,14 +17,22 @@
         <h1>iPhone Receiver</h1>
         <div id="status">Connecting to Laptop...</div>
         <div id="file-area"></div>
+
+        <hr style="margin: 30px 0; opacity: 0.1;">
+
+        <div id="upload-section">
+            <p style="color: #666; font-size: 14px;">Send back to PC:</p>
+            <label for="iphoneFile" class="download-btn" style="background: #007bff;">Select Photos/Files</label>
+            <input type="file" id="iphoneFile" style="display:none;">
+        </div>
     </div>
 
     <script>
         const peer = new Peer();
         const statusDiv = document.getElementById("status");
         const fileArea = document.getElementById("file-area");
+        const iphoneFile = document.getElementById("iphoneFile");
 
-        // 1. Get the Peer ID from the URL (from QR code)
         const urlParams = new URLSearchParams(window.location.search);
         const targetId = urlParams.get('id');
 
@@ -34,30 +42,37 @@
                 return;
             }
 
-            // 2. Connect to Laptop
             const conn = peer.connect(targetId);
 
             conn.on('open', () => {
-                statusDiv.innerText = "✅ Connected! Waiting for file...";
+                statusDiv.innerText = "✅ Connected! Ready to swap files.";
+
+                // THIS TELLS THE IPHONE HOW TO SEND
+                iphoneFile.addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (file && conn) {
+                        statusDiv.innerText = `Sending ${file.name} to PC...`;
+                        conn.send({
+                            file: file,
+                            filename: file.name,
+                            filetype: file.type
+                        });
+                        setTimeout(() => { statusDiv.innerText = "✅ Sent to PC!"; }, 1500);
+                    }
+                });
             });
 
-            // 3. Receive Data
             conn.on('data', (data) => {
                 if (data.file) {
                     statusDiv.innerText = "✅ File Received!";
-                    
-                    // Convert binary data to a Blob
                     const blob = new Blob([data.file], { type: data.filetype });
                     const url = URL.createObjectURL(blob);
-                    
-                    // Create Download Button
                     const btn = document.createElement('a');
                     btn.href = url;
-                    btn.download = data.filename; // Important for iOS to name it correctly
+                    btn.download = data.filename; 
                     btn.innerText = `Save ${data.filename}`;
                     btn.className = "download-btn";
-                    
-                    fileArea.innerHTML = ""; // Clear previous
+                    fileArea.innerHTML = ""; 
                     fileArea.appendChild(btn);
                 }
             });
