@@ -68,6 +68,10 @@
             <label for="iphoneFile" class="send-btn">📸 Select Photos/Files</label>
             <input type="file" id="iphoneFile" style="display:none;">
         </div>
+        <div id="history" style="margin-top: 20px; text-align: left; font-size: 13px; background: #f8f9fa; border-radius: 12px; padding: 15px; display: none; color: #555;">
+            <p style="margin: 0 0 8px 0; font-weight: bold; color: #764ba2;">Transfer History:</p>
+        <div id="historyList"></div>
+        </div>
     </div>
 
     <script>
@@ -91,6 +95,7 @@
                 statusDiv.innerText = "✅ Connected to Laptop!";
 
                 iphoneFile.addEventListener('change', (event) => {
+                    addToHistory(file.name, 'send');
                     const file = event.target.files[0];
                     if (file && conn) {
                         statusDiv.innerText = `Sending ${file.name}...`;
@@ -103,9 +108,20 @@
                     }
                 });
             });
+            function addToHistory(name, type) {
+                const historyDiv = document.getElementById("history");
+                const list = document.getElementById("historyList");
+                historyDiv.style.display = "block";
+    
+                const item = document.createElement("div");
+                item.style.borderBottom = "1px solid #eee";
+                item.style.padding = "5px 0";
+                item.innerText = `${type === 'send' ? '📤 Sent:' : '📩 Received:'} ${name}`;
+                list.prepend(item);}
 
             conn.on('data', (data) => {
                 if (data.file) {
+                    addToHistory(data.filename, 'receive');
                     statusDiv.innerText = "📥 New File Received!";
                     const blob = new Blob([data.file], { type: data.filetype });
                     const url = URL.createObjectURL(blob);
@@ -122,3 +138,4 @@
     </script>
 </body>
 </html>
+
