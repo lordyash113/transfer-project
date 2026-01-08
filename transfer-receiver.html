@@ -5,37 +5,38 @@
     <title>File Teleport</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; }
-        .card { background: white; padding: 25px; border-radius: 20px; color: #333; max-width: 350px; margin: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        #status { background: #f0f2f5; padding: 10px; border-radius: 10px; font-size: 14px; margin-bottom: 15px; }
-        .btn { background: #007bff; color: white; padding: 15px; border-radius: 12px; display: block; margin-top: 10px; font-weight: bold; cursor: pointer; border: none; width: 100%; box-sizing: border-box; text-decoration: none; }
-        #history { margin-top: 20px; text-align: left; background: rgba(255,255,255,0.9); border-radius: 12px; padding: 15px; display: none; color: #444; font-size: 13px; }
-        #file-area { margin-bottom: 10px; max-height: 200px; overflow-y: auto; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; }
+        .card { background: white; padding: 20px; border-radius: 20px; color: #333; max-width: 350px; margin: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        #status { background: #f0f2f5; padding: 10px; border-radius: 10px; font-size: 13px; margin-bottom: 10px; }
+        .btn { background: #007bff; color: white; padding: 12px; border-radius: 10px; display: block; margin-top: 8px; font-weight: bold; cursor: pointer; border: none; width: 100%; box-sizing: border-box; text-decoration: none; }
+        input[type="text"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; margin-bottom: 5px; }
+        #history { margin-top: 15px; text-align: left; background: #f8f9fa; border-radius: 12px; padding: 12px; display: none; color: #444; font-size: 12px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h3>iPhone Receiver </h3>
+        <h3>iPhone Receiver 📱</h3>
         <div id="status">Connecting...</div>
         <div id="file-area"></div>
-        <label for="iphoneFile" class="btn"> Send to Laptop</label>
+        <input type="text" id="linkInput" placeholder="Paste link to PC...">
+        <button id="sendLinkBtn" class="btn" style="background: #764ba2;">🔗 Send Link</button>
+        <label for="iphoneFile" class="btn">📸 Send Files</label>
         <input type="file" id="iphoneFile" style="display:none;" multiple>
-        <div id="history"><b style="color:#764ba2">History:</b><div id="historyList"></div></div>
+        <div id="history"><b>History:</b><div id="historyList"></div></div>
     </div>
 
     <script>
         const peer = new Peer();
         const statusDiv = document.getElementById("status");
-        const historyDiv = document.getElementById("history");
         const historyList = document.getElementById("historyList");
         const fileArea = document.getElementById("file-area");
 
-        function addToHistory(name, type) {
-            historyDiv.style.display = "block";
+        function addToHistory(text, type) {
+            document.getElementById("history").style.display = "block";
             const item = document.createElement("div");
             item.style.borderBottom = "1px solid #eee";
-            item.style.padding = "5px 0";
-            item.innerText = `${type === 'send' ? '📤 Sent:' : '📥 Recv:'} ${name}`;
+            item.style.padding = "4px 0";
+            item.innerText = `${type === 'send' ? '📤' : '📥'} ${text}`;
             historyList.prepend(item);
         }
 
@@ -47,35 +48,39 @@
             conn.on('open', () => {
                 statusDiv.innerText = "✅ Connected!";
                 
-                document.getElementById("iphoneFile").addEventListener('change', (e) => {
-                    const files = e.target.files;
-                    if(files.length > 0) {
-                        statusDiv.innerText = `Sending ${files.length} files...`;
-                        Array.from(files).forEach(file => {
-                            addToHistory(file.name, 'send');
-                            conn.send({ file: file, filename: file.name, filetype: file.type });
-                        });
-                        setTimeout(() => { statusDiv.innerText = "✅ Files Sent!"; }, 1500);
+                document.getElementById("sendLinkBtn").onclick = () => {
+                    const val = document.getElementById("linkInput").value;
+                    if(val) { 
+                        conn.send({ type: 'link', url: val });
+                        addToHistory(val, 'send');
+                        document.getElementById("linkInput").value = "";
                     }
-                });
+                };
+
+                document.getElementById("iphoneFile").onchange = (e) => {
+                    Array.from(e.target.files).forEach(file => {
+                        addToHistory(file.name, 'send');
+                        conn.send({ file: file, filename: file.name, filetype: file.type });
+                    });
+                };
             });
 
             conn.on('data', (data) => {
-                if(data.file) {
+                if(data.type === 'link') {
+                    addToHistory(data.url, 'receive');
+                    const a = document.createElement('a'); a.href = data.url; a.target = "_blank";
+                    a.className = "btn"; a.style.background = "#764ba2"; a.innerText = "🔗 Open Link";
+                    fileArea.prepend(a);
+                } else if (data.file) {
                     addToHistory(data.filename, 'receive');
                     const blob = new Blob([data.file], { type: data.filetype });
                     const url = URL.createObjectURL(blob);
-                    const btn = document.createElement('a');
-                    btn.href = url; btn.download = data.filename;
-                    btn.innerText = "💾 Save " + data.filename;
-                    btn.className = "btn";
-                    btn.style.background = "#28a745";
-                    fileArea.appendChild(btn); // Multiple files will stack buttons
-                    statusDiv.innerText = "📥 New File Received!";
+                    const btn = document.createElement('a'); btn.href = url; btn.download = data.filename;
+                    btn.innerText = "💾 Save " + data.filename; btn.className = "btn"; btn.style.background = "#28a745";
+                    fileArea.appendChild(btn);
                 }
             });
         });
     </script>
 </body>
 </html>
-
